@@ -17,23 +17,23 @@ class Position
         get { return column; }
         set { column = value; }
     }
-    
+
     // Constructor 
     public Position(int x, int y)
     {
-        if(ValidPosition(x, y))
+        if (ValidPosition(x, y))
         {
             this.row = x;
             this.column = y;
         }
-        
+
     }
     //Method
     public bool ValidPosition(int X, int Y)
     {
         if (X < 0 || Y < 0 || X > 5 || Y > 5)
         {
-            
+
             return false;
         }
         else
@@ -46,17 +46,17 @@ class Position
 class Player
 {
     public string name;
-    public int gemCount =0;
+    public int gemCount = 0;
     public Position position;
 
     public Player(string name, int x, int y)
     {
         this.name = name;
-        if(ValidPosition(x, y))
+        if (ValidPosition(x, y))
         {
             this.position = new Position(x, y);
         }
-        
+
 
 
     }
@@ -126,7 +126,7 @@ class Cell
         get { return occupant; }
         set
         {
-            if(value == "P1" || value == "P2" || value == "G" || value == "-" || value == "O") { occupant = value;  }
+            if (value == "P1" || value == "P2" || value == "G" || value == "-" || value == "O") { occupant = value; }
         }
     }
 
@@ -135,18 +135,11 @@ class Board
 {
     private Random random = new Random();
     public Cell[,] Grid = new Cell[6, 6];
-    public Player player1 = new Player("P1", 0, 0);
-    public Player player2 = new Player("P2", 5, 5);
+    public int totalGems = 5;
+
     //public Player currentTurn;
 
-    public Player Player1
-    {
-        set { this.player1 = value; }
-    }
-    public Player Player2
-    {
-        set { this.player2 = value; }
-    }
+
     public Board()
     {
 
@@ -158,30 +151,30 @@ class Board
             }
         }
 
-        Grid[player1.position.X, player1.position.Y].Occupant = player1.name;
-        Grid[player2.position.X, player2.position.Y].Occupant = player2.name;
+        Grid[0, 0].Occupant = "P1";
+        Grid[5, 5].Occupant = "P2";
         PlaceItemsRandomly(5, "G");
         PlaceItemsRandomly(5, "O");
-        Grid[1, 0].Occupant = "O";
+
     }
 
     public void PlaceItemsRandomly(int count, string item)
     {
-        for(int i = 0;i< count;i++)
+        for (int i = 0; i < count; i++)
         {
             int x, y;
             do
             {
-                x=random.Next(6);
-                y=random.Next(6);
-            } while (Grid[x,y].Occupant != "-");
+                x = random.Next(6);
+                y = random.Next(6);
+            } while (Grid[x, y].Occupant != "-");
 
-            Grid[x,y].Occupant = item;
+            Grid[x, y].Occupant = item;
         }
     }
     public void Display()
     {
-        
+
         for (int i = 0; i < 6; i++)
         {
             Console.WriteLine("");
@@ -198,6 +191,7 @@ class Board
         if (Grid[row, col].Occupant == "G")
         {
             player.gemCount++;
+            totalGems--;
         }
 
     }
@@ -230,15 +224,15 @@ class Board
 
         }
 
-        if(newRow < 0 || newRow >= Grid.GetLength(0) || newCol < 0 || newCol >= Grid.GetLength(1))
+        if (newRow < 0 || newRow >= Grid.GetLength(0) || newCol < 0 || newCol >= Grid.GetLength(1))
         {
             Console.WriteLine("Out of Bounds");
             return false;
         }
-        
-        if (Grid[newRow,newCol].Occupant == "-" || Grid[newRow, newCol].Occupant == "G")
+
+        if (Grid[newRow, newCol].Occupant == "-" || Grid[newRow, newCol].Occupant == "G")
         {
-            CollectGem(player,newRow,newCol);
+            CollectGem(player, newRow, newCol);
             if (player.Move(direction))
 
             {
@@ -255,96 +249,102 @@ class Board
         else
         {
             Console.WriteLine("Action cannot be performed");
-        }        
+        }
 
-         return false;
+        return false;
     }
-    
+
 }
 class Game
 {
+    Board board;
+    Player player1;
+    Player player2;
+    Player currentTurn;
+    string direction;
+    int totalTurns = 0;
+    int xAxis, yAxis;
 
 
-    static void Main(string[] args)
+    public Game()
     {
-        
-        Board board = new Board();
-        Player player1 = new Player("P1", 0, 0);
-        Player player2 = new Player("P2", 5, 5);
-        Player currentTurn;
-        int totalTurns=1;
+        board = new Board();
+        player1 = new Player("P1", 0, 0);
+        player2 = new Player("P2", 5, 5);
 
-        Console.WriteLine("Gem Count: " + board.player1.gemCount);
-        Console.WriteLine("Gem Count: " + board.player2.gemCount);
-        board.Display();
+    }
 
-        String direction;
-        bool status;
-     
-        for(int i=totalTurns;i<5;i++)
+    public void start()
+    {
+
+        currentTurn = player1;
+        while (!GameOver())
         {
-            if (i % 2 == 0)
+            board.Display();
+            Console.WriteLine($"Turn of {currentTurn.name}");
+            Console.WriteLine("\nEnter direction");
+            direction = Console.ReadLine();
+            xAxis = currentTurn.position.X;
+            yAxis = currentTurn.position.Y;
+            Console.WriteLine();
+            if (board.IsValidMove(currentTurn, direction))
             {
-                Console.WriteLine("");
-                Console.WriteLine("Enter the direction: ");
-                direction = Console.ReadLine();
-                status=board.IsValidMove(board.player1, direction);
-                if (status) { totalTurns++; }
-                board.Display();
+
+                board.Grid[currentTurn.position.X, currentTurn.position.Y].Occupant = currentTurn.name;
+                board.Grid[xAxis, yAxis].Occupant = "-";
+
+                SwitchTurn();
+                totalTurns++;
+
             }
-            else if (i % 2 == 1)
-            {
-                Console.WriteLine("");
-                Console.WriteLine("Enter the direction: ");
-                direction = Console.ReadLine();
-                status=board.IsValidMove(board.player2, direction);
-                if (status) { totalTurns++; }
-                board.Display();
-            }
-            else if (i > 10)
-            {
-                Environment.Exit(0);
-            }
+
         }
-
-
-
+        board.Display();
+        AnnounceWinner();
 
     }
 
 
+    public void SwitchTurn()
+    {
+        currentTurn = (currentTurn == player1) ? player2 : player1;
+    }
+    public bool GameOver()
+    {
+        if (totalTurns >= 30)
+        {
+            return true;
+        }
+        else if (board.totalGems == 0)
+        {
+            return true;
+        }
+        else return false;
+
+    }
+    public void AnnounceWinner()
+    {
+        Console.WriteLine("Game over!\n");
+        Console.WriteLine($"Player 1 has collected {player1.gemCount} gems.");
+        Console.WriteLine($"Player 2 has collected {player2.gemCount} gems.");
+
+        if (player1.gemCount > player2.gemCount)
+            Console.WriteLine("\nPlayer 1 won the game!");
+        else if (player2.gemCount > player1.gemCount)
+            Console.WriteLine("\nPlayer 2 won the game!");
+        else
+            Console.WriteLine("\nThe game ended in a Tie!");
+    }
 
 
 }
 class Program
 {
-    //Console.WriteLine("Gem Count: " + board.player1.gemCount);
-    //    Console.WriteLine("Gem Count: " + board.player2.gemCount);
-    //    board.Display();
-    //    Console.WriteLine("");
-    //    Console.WriteLine("Enter the direction: ");
-    //    String direction = Console.ReadLine();
-    //board.IsValidMove(board.player1, direction);
-    //    board.Display();
+    static void Main(string[] args)
+    {
+        Game game = new Game();
+        game.start();
 
-    //    Console.WriteLine("Enter the direction: ");
-    //    direction = Console.ReadLine();
-    //    board.IsValidMove(board.player1, direction);
-    //    Console.WriteLine("Gem Count: " + board.player1.gemCount);
-    //    Console.WriteLine("Gem Count: " + board.player2.gemCount);
-    //    board.Display();
+    }
 
-    //    Console.WriteLine("Enter the direction: ");
-    //    direction = Console.ReadLine();
-    //    board.IsValidMove(board.player1, direction);
-    //    Console.WriteLine("Gem Count: " + board.player1.gemCount);
-    //    Console.WriteLine("Gem Count: " + board.player2.gemCount);
-    //    board.Display();
-
-    //    Console.WriteLine("Enter the direction: ");
-    //    direction = Console.ReadLine();
-    //    board.IsValidMove(board.player1, direction);
-    //    Console.WriteLine("Gem Count: " + board.player1.gemCount);
-    //    Console.WriteLine("Gem Count: " + board.player2.gemCount);
-    //    board.Display();
 }
